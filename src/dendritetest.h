@@ -9,6 +9,9 @@
 
 namespace bdm {
 
+using experimental::neuroscience::NeuriteElement;
+using experimental::neuroscience::NeuronSoma;
+
   struct dendGrowth : public BaseBiologyModule {
   dendGrowth() : BaseBiologyModule(gAllBmEvents) {}
 
@@ -33,20 +36,22 @@ template <typename Backend>
       using NeuriteElement = experimental::neuroscience::NeuriteElement;
       using NeuronSoma = experimental::neuroscience::NeuronSoma;
       using BiologyModules = Variant<dendGrowth>; // add GrowthModule
+      using AtomicTypes = VariadicTypedef<NeuronSoma, NeuriteElement>;
   };
 template <typename TResourceManager = ResourceManager<>>
 
 inline int Simulate(int argc, const char** argv) {
-  InitializeBiodynamo(argc, argv);
+  Simulation<> simulation(argc, argv);
+  auto* rm = simulation.GetResourceManager();
+  auto* scheduler = simulation.GetScheduler();
 
-  Cell cell({0, 0, 0}); // creating the cell at position x, y, z
-  cell.SetDiameter(7.5);
-  cell.ExtendNewNeurite({0,0,1});
-  ResourceManager<>::Get()->push_back(cell);
+  NeuronSoma soma({0, 0, 0}); // creating the cell at position x, y, z
+  soma.SetDiameter(7.5);
+  soma.ExtendNewNeurite({0,0,1});
+  rm->Get<NeuronSoma>()->push_back(soma);
 
   // Run simulation
-  Scheduler<> scheduler;
-  scheduler.Simulate(10);
+  scheduler->Simulate(10);
 
   std::cout << "Simulation completed successfully!" << std::endl;
   return 0;
