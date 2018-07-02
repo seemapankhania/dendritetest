@@ -14,22 +14,23 @@ namespace bdm {
 
     template <typename T>
       void Run(T* sim_object) {
-        if (sim_object->template IsSoType<experimental::neuroscience::NeuriteElement>()) {
-          auto&& sim_objectNeurite = sim_object->template ReintepretCast<experimental::neuroscience::NeuriteElement>;
-          auto neurite = sim_objectNeurite.GetSoPtr();
+        if (sim_object->template IsSoType<NeuriteElement>()) {
+          auto&& sim_objectNeurite = sim_object->template ReinterpretCast<NeuriteElement>();
+          auto ne = sim_objectNeurite->GetSoPtr();
 
+          ne->ElongateTerminalEnd(10, {0,0,1});
 
         }
 
-        // code to be executed each at simulation step
-      }
+      } // end Run
 
     ClassDefNV(dendGrowth, 1);
   };
+
 // Define compile time parameter
 template <typename Backend>
     struct CompileTimeParam : public DefaultCompileTimeParam<Backend> {
-      // using NeuronSoma = typename TCompileTimeParam::NeuronSoma;
+      using NeuriteElement = experimental::neuroscience::NeuriteElement;
       using NeuronSoma = experimental::neuroscience::NeuronSoma;
       using BiologyModules = Variant<dendGrowth>; // add GrowthModule
   };
@@ -38,22 +39,14 @@ template <typename TResourceManager = ResourceManager<>>
 inline int Simulate(int argc, const char** argv) {
   InitializeBiodynamo(argc, argv);
 
-//  Param::min_bound_ = 0;
-//  Param::max_bound_ = 100; // cube of 100*100*100
-
-  auto rm = TResourceManager::Get(); // set up resource manager
-  auto cells = rm->template Get<Cell>(); // create a structure to contain cells
-  cells->reserve(1); // allocate the correct number of cell in our cells structure before cell creation
-
   Cell cell({0, 0, 0}); // creating the cell at position x, y, z
   cell.SetDiameter(7.5);
-//  cell.ExtendNewNeurite({0,0,1});
-  cells->push_back(cell); // put the created cell in our cells structure
-  cells->Commit();
+  cell.ExtendNewNeurite({0,0,1});
+  ResourceManager<>::Get()->push_back(cell);
 
-  // Run simulation for one timestep
+  // Run simulation
   Scheduler<> scheduler;
-  scheduler.Simulate(1);
+  scheduler.Simulate(10);
 
   std::cout << "Simulation completed successfully!" << std::endl;
   return 0;
