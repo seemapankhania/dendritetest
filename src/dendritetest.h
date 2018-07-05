@@ -20,8 +20,8 @@ using experimental::neuroscience::NeuronSoma;
         if (sim_object->template IsSoType<NeuriteElement>()) {
           auto&& sim_objectNeurite = sim_object->template ReinterpretCast<NeuriteElement>();
           auto ne = sim_objectNeurite->GetSoPtr();
-
-          ne->ElongateTerminalEnd(10, {0,0,1});
+          std::array<double, 3> direction = ne->GetSpringAxis();
+          ne->ElongateTerminalEnd(10, direction);
 
         }
 
@@ -47,11 +47,19 @@ inline int Simulate(int argc, const char** argv) {
 
   NeuronSoma soma({0, 0, 0}); // creating the cell at position x, y, z
   soma.SetDiameter(7.5);
-  soma.ExtendNewNeurite({0,0,1});
+  auto neurite1 = soma.ExtendNewNeurite({0,0,1});
+  neurite1->AddBiologyModule(dendGrowth());
+  auto neurite2 = soma.ExtendNewNeurite({10,10,0});
+  neurite2->AddBiologyModule(dendGrowth());
+  auto neurite3 =soma.ExtendNewNeurite({20,0,0});
+  neurite3->AddBiologyModule(dendGrowth());
+  auto neurite4 =soma.ExtendNewNeurite({0,7,0});
+  neurite4->AddBiologyModule(dendGrowth());
   rm->Get<NeuronSoma>()->push_back(soma);
 
+
   // Run simulation
-  scheduler->Simulate(10);
+  scheduler->Simulate(100);
 
   std::cout << "Simulation completed successfully!" << std::endl;
   return 0;
